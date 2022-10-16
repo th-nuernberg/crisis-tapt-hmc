@@ -1,0 +1,102 @@
+experiment:
+  dir: pretrained
+  name: tapt_emlm
+  override: False
+  seed: 42
+
+train_dataset:
+  name: trecis-single-task-dataset
+  params:
+    data_path: materials/datasets/seed{}/train_masked.json
+    encoder:
+      key: low_info_type
+      name: infotype2multilabel
+      params:
+        file: materials/meta/infotypes.json
+        _type: low_info_type
+    max_length: 128
+    truncation: True
+    pad_to_max_length: False
+    mlm: True
+    cache_dir: 'hf'
+
+eval_dataset:
+  name: trecis-single-task-dataset
+  params:
+    data_path: materials/datasets/seed{}/eval_masked.json
+    encoder:
+      key: low_info_type
+      name: infotype2multilabel
+      params:
+        file: materials/meta/infotypes.json
+        _type: low_info_type
+    max_length: 128
+    truncation: True
+    pad_to_max_length: False
+    mlm: True
+    cache_dir: 'hf'
+
+tokenizer:
+  name: bert-tokenizer
+  params:
+    model_name_or_path: bert-base-uncased
+    add_special_tokens: [
+      '[HASHTAG]',
+      '[URL]',
+      '[PERSON]',
+      '[LOCATION]',
+      '[ORGANIZATION]',
+      '[EVENT]',
+      '[ADDRESS]',
+      '[PHONE_NUMBER]',
+      '[DATE]',
+      '[NUMBER]'
+    ]
+    use_fast: False
+    cache_dir: 'hf'
+    
+model:
+  name: bert-mlm-encoder
+  params:
+    model_name_or_path: bert-base-uncased
+    cache_dir: 'hf'
+
+collator:
+  name: entity-masking-collator
+  params:
+    entity_prob: 0.5
+    non_entity_prob: 0.1
+    entity_tokens: [
+      '[HASHTAG]',
+      '[URL]',
+      '[PERSON]',
+      '[LOCATION]',
+      '[ORGANIZATION]',
+      '[EVENT]',
+      '[ADDRESS]',
+      '[PHONE_NUMBER]',
+      '[DATE]',
+      '[NUMBER]'
+    ]
+    ignore_idx: -100
+
+training:
+  do_train: True
+  do_eval: True
+  do_predict: True
+  per_device_train_batch_size: 32
+  per_device_eval_batch_size: 32
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  warmup_ratio: 0.05
+  num_train_epochs: 50
+  gradient_accumulation_steps: 4
+  evaluation_strategy: steps
+  eval_steps: 250
+  save_strategy: steps
+  save_steps: 250
+  save_total_limit: 10
+  logging_strategy: steps
+  logging_steps: 250
+  load_best_model_at_end: True
+  overwrite_output_dir: False
